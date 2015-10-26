@@ -83,14 +83,14 @@ class OpenBSD_PackageParser extends PackageParser {
             $header = array_combine($matches[1], $matches[2]);
 
             // parse origin and categories
-            if (isset($header['comment']) && preg_match('/pkgpath=([^,]+),/', $header['comment'], $matches)) {
+            if (isset($header['comment']) && preg_match('/pkgpath=([^\s,]+)(?:[ ,])/', $header['comment'], $matches)) {
                 $header['origin'] = $matches[1];
                 $header['categories'] = array(substr($matches[1], 0, strpos($matches[1], '/')));
                 unset($header['comment']);
             }
 
             // parse name and version
-            if (isset($header['name']) && preg_match('/^(.+)[-]([0-9.]+)$/', $header['name'], $matches)) {
+            if (isset($header['name']) && preg_match('/^(.+)[-]([0-9.p]+)$/', $header['name'], $matches)) {
                 $header['name'] = $matches[1];
                 $header['version'] = $matches[2];
             }
