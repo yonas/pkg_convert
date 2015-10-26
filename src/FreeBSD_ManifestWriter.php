@@ -6,13 +6,11 @@ use fizk\pkg\PackageCli;
 
 class FreeBSD_ManifestWriter extends ManifestWriter {
     public function create_manifest($output_dir) {
-        PackageCli::debug('create_manifest -- ' . $output_dir);
         return $this->create_metadatadir($this->package, $output_dir);
     }
 
     // Creates +MANIFEST and plist files
     private function create_metadatadir(Package $pkg, $output_dir) {
-        PackageCli::debug('create_metadatadir -- ' . $output_dir);
         if (empty($pkg)) {
             print("Parsed package information is empty. Aborting package creation.\n");
             return false;
@@ -50,7 +48,13 @@ class FreeBSD_ManifestWriter extends ManifestWriter {
             mkdir($files_dir, 0755, true);
         }
 
-        shell_exec('find ' . $this->pkg_path . ' -type d -exec cp -Rp {} ' . $files_dir . ' \;');
+        if (!is_dir($this->package_path)) {
+            print("Package path \"$this->package_path does not exist.\n");
+            return false;
+        }
+
+        PackageCli::debug('Copying extracted package files in ' . $this->package_path . ' to output directory ' . $files_dir);
+        shell_exec('find ' . $this->package_path . ' -type d -exec cp -Rp {} ' . $files_dir . ' \;');
         file_put_contents($metadatadir . '/+MANIFEST', json_encode($manifest, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
         file_put_contents($output_dir . '/plist', join("\n", $plist));
 

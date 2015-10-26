@@ -7,11 +7,11 @@ namespace fizk\pkg;
  */
 abstract class ManifestWriter {
     protected $package = null;
-    protected $pkg_path = null;
+    protected $package_path = null;
 
-    public function __construct(Package $package, $pkg_path) {
+    public function __construct(Package $package, $package_path) {
         $this->package = $package;
-        $this->pkg_path = $pkg_path;
+        $this->package_path = $package_path;
     }
 
     public function create_manifest($output_dir) {

@@ -21,9 +21,23 @@ class PackageCli {
         }
     }
 
+    public static function remove_dir($dir) {
+        $files = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($files as $fileinfo) {
+            $todo = ($fileinfo->isDir() ? 'rmdir' : 'unlink');
+            $todo($fileinfo->getRealPath());
+        }
+
+        rmdir($dir);
+    }
+
     public static function usage() {
         global $argv;
-        print($argv[0] . " -p|--package-path <path to uncompressed package directory or compressed package file> [-o|--output-path <path to output directory>] [-d|--debug]\n\n");
+        print("\nUsage: " . $argv[0] . " -p|--package-path <path to uncompressed package directory or compressed package file> [-o|--output-path <path to output directory>] [-d|--debug]\n\n");
     }
 
     public static function get_options() {

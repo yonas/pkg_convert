@@ -2,12 +2,58 @@
 
 namespace fizk\pkg;
 
+use fizk\pkg\PackageCli;
+
 class OpenBSD_PackageParser extends PackageParser {
     protected $pkg;
+    protected $tmp_dir;
 
     protected function pre_parse() {
-        // If it's a .tgz, extract files
+        // If it's a .tgz file, extract it
+        if (preg_match('/[.]tgz$/', $this->path)) {
+            // Remove temporary .tar file if it exists
+            $tarfile = basename($this->path, '.tgz') . '.tar';
+            if (is_file($tarfile)) {
+                PackageCli::debug('Delete temporary tar file');
+                unlink($tarfile);
+            }
+
+            // Decompress gzip
+            $phar = new \PharData($this->path);
+            $phar->decompress();
+
+            // Remove existing temporary extraction directory if it exists
+            $tmp_dir = '/tmp/pkg-create-' . basename($this->path, '.tgz');
+            if (is_dir($tmp_dir)) {
+                PackageCli::debug('Delete temporary package directory');
+                PackageCli::remove_dir($tmp_dir);
+            }
+
+            // Extract tar
+            PackageCli::debug('Extracting ' . $this->path . ' to ' . $tmp_dir);
+            $phar->extractTo($tmp_dir);
+            $this->path = $tmp_dir;
+            $this->path_is_tmp = true;
+
+            // Remove temporary .tar file
+            PackageCli::debug('Delete temporary tar file');
+            unlink($tarfile);
+        }
+
         // Verify +CONTENTS and +DESC files exist
+        if (!is_file($this->path . '/+CONTENTS')) {
+            throw new Exception('OpenBSD package is missing +CONTENTS file.');
+        }
+
+        if (!is_file($this->path . '/+DESC')) {
+            throw new Exception('OpenBSD package is missing +DESC file.');
+        }
+    }
+
+    protected function post_parse() {
+        if (!empty($this->tmp_dir) && is_dir($this->tmp_dir)) {
+            PackageCli::remove_dir($this->tmp_dir);
+        }
     }
 
     protected function parse() {
@@ -17,7 +63,7 @@ class OpenBSD_PackageParser extends PackageParser {
 
     private function parse_contents_file() {
         $contents = array();
-        $file = file_get_contents($this->dir . '/+CONTENTS');
+        $file = file_get_contents($this->path . '/+CONTENTS');
 
         if (preg_match('/^(.+)\n[+]DESC\n((?:.+)\n@cwd[^\n]+)\n(.+)\n$/sm', $file, $matches)) {
             array_shift($matches);
@@ -180,7 +226,7 @@ class OpenBSD_PackageParser extends PackageParser {
 
     private function parse_info_file() {
         $info = array();
-        $content = file_get_contents($this->dir . '/+DESC');
+        $content = file_get_contents($this->path . '/+DESC');
 
         // parse maintainer
         if (preg_match('/^Maintainer: (.+)$/m', $content, $matches)) {

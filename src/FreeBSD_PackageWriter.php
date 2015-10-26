@@ -6,12 +6,10 @@ use fizk\pkg\PackageCli;
 
 class FreeBSD_PackageWriter extends PackageWriter {
     private function canonicalize_path($path, $cwd=null) {
-
         // don't prefix absolute paths
         if (substr($path, 0, 1) === "/") {
             $filename = $path;
         }
-
         // prefix relative path with $root
         else {
             $root      = is_null($cwd) ? getcwd() : $cwd;
@@ -42,16 +40,14 @@ class FreeBSD_PackageWriter extends PackageWriter {
 
         $output_dir = $this->canonicalize_path($output_dir);
 
+        // Parse package information
         $package = new FreeBSD_Package($this->parser->parse_pkg());
 
-        // Parse package information
+        // Create FreeBSD manifest and plist files
         $manifest_writer = new FreeBSD_ManifestWriter($package, $this->parser->get_pkg_path());
-        PackageCli::debug('PackageWriter output_dir: ' . $output_dir);
-        $manifest_writer->create_manifest($output_dir);
+        return $manifest_writer->create_manifest($output_dir);
 
-        // TODO:
+        // Create FreeBSD compressed package file
         // pkg create --format txz --out-dir /tmp/test2 --verbose --plist /home/yonas/packages/obsd/test/plist --metadata /home/yonas/packages/obsd/test/metadata --root-dir /home/yonas/packages/obsd/test/usr/local
-
-        return true;
     }
 }
