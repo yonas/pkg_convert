@@ -12,12 +12,12 @@ class FreeBSD_PackageWriter extends PackageWriter {
         }
         // prefix relative path with $root
         else {
-            $root      = is_null($cwd) ? getcwd() : $cwd;
-            $filename  = sprintf("%s/%s", $root, $path);
+            $root = is_null($cwd) ? getcwd() : $cwd;
+            $filename = sprintf("%s/%s", $root, $path);
         }
 
         // get realpath of dirname
-        $dirname   = dirname($filename);
+        $dirname = dirname($filename);
         $canonical = realpath($dirname);
 
         // trigger error if $dirname is nonexistent
@@ -26,7 +26,8 @@ class FreeBSD_PackageWriter extends PackageWriter {
         }
 
         // prevent double slash "//" below
-        if ($canonical === "/") $canonical = null;
+        if ($canonical === "/")
+            $canonical = null;
 
         // return canonicalized path
         return sprintf("%s/%s", $canonical, basename($filename));
@@ -43,11 +44,37 @@ class FreeBSD_PackageWriter extends PackageWriter {
         // Parse package information
         $package = new FreeBSD_Package($this->parser->parse_pkg());
 
+        // `pkg create` workaround
+        $package->plist = array_merge(array('@cwd /'), $package->plist);
+
+        PackageCli::debug('package');
+        PackageCli::debug($package->plist);
+
         // Create FreeBSD manifest and plist files
         $manifest_writer = new FreeBSD_ManifestWriter($package, $this->parser->get_pkg_path());
-        return $manifest_writer->create_manifest($output_dir);
+        $manifest = $manifest_writer->create_manifest();
+
+        // Move package files to be under $prefix
+        PackageCli::debug('Package prefix: ' . $package->prefix);
+
+        $package_dir = $this->parser->get_pkg_path() . $package->prefix;
+        PackageCli::debug('Creating new package directory: ' . $package_dir);
+        mkdir($package_dir, 0755, true);
+        PackageCli::debug('Moving contents of ' . $this->parser->get_pkg_path() . ' to new directory ' . $package_dir);
+        shell_exec('mv ' . $this->parser->get_pkg_path() . '/* ' . $package_dir . '/');
 
         // Create FreeBSD compressed package file
-        // pkg create --format txz --out-dir /tmp/test2 --verbose --plist /home/yonas/packages/obsd/test/plist --metadata /home/yonas/packages/obsd/test/metadata --root-dir /home/yonas/packages/obsd/test/usr/local
+        $command = 'cd / && pkg create --format ' . $format .
+                   ' --out-dir ' . $output_dir .
+                   ' --verbose' .
+                   ' --plist ' . $manifest['plist_dir'] . '/plist' .
+                   ' --metadata ' . $manifest['manifest_dir'] .
+                   ' --root-dir ' . $this->parser->get_pkg_path() . $package->prefix;
+
+        PackageCli::debug("Creating pkg file:\n". $command);
+        $output = shell_exec($command);
+        print_r($output);
+
+        return true;
     }
 }

@@ -14,6 +14,5 @@ abstract class ManifestWriter {
         $this->package_path = $package_path;
     }
 
-    public function create_manifest($output_dir) {
-    }
+    public function create_manifest() { }
 }

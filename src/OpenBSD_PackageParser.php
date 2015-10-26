@@ -22,12 +22,8 @@ class OpenBSD_PackageParser extends PackageParser {
             $phar = new \PharData($this->path);
             $phar->decompress();
 
-            // Remove existing temporary extraction directory if it exists
-            $tmp_dir = '/tmp/pkg-create-' . basename($this->path, '.tgz');
-            if (is_dir($tmp_dir)) {
-                PackageCli::debug('Delete temporary package directory');
-                PackageCli::remove_dir($tmp_dir);
-            }
+            // Create temporary directory
+            $tmp_dir = PackageCli::create_temp_dir();
 
             // Extract tar
             PackageCli::debug('Extracting ' . $this->path . ' to ' . $tmp_dir);
@@ -42,11 +38,11 @@ class OpenBSD_PackageParser extends PackageParser {
 
         // Verify +CONTENTS and +DESC files exist
         if (!is_file($this->path . '/+CONTENTS')) {
-            throw new Exception('OpenBSD package is missing +CONTENTS file.');
+            throw new \Exception('OpenBSD package is missing +CONTENTS file.');
         }
 
         if (!is_file($this->path . '/+DESC')) {
-            throw new Exception('OpenBSD package is missing +DESC file.');
+            throw new \Exception('OpenBSD package is missing +DESC file.');
         }
     }
 
@@ -110,23 +106,12 @@ class OpenBSD_PackageParser extends PackageParser {
                 switch ($header['arch']) {
                     case 'amd64':
                         $header['arch'] = strtolower($system_os_name) . ':' . $system_os_ver . ':x86:64';
+                        break;
 
                     default:
                         unset($header['arch']);
                 }
             }
-
-/*
-            // remove signer
-            if (isset($header['signer'])) {
-                unset($header['signer']);
-            }
-
-            // remove digital-signature
-            if (isset($header['digital-signature'])) {
-                unset($header['digital-signature']);
-            }
-*/
         }
 
         return $header;
@@ -166,11 +151,10 @@ class OpenBSD_PackageParser extends PackageParser {
         $files = array();
 
         $obsd_commands = array('ask-update', 'bin', 'comment', 'conflict', 'cwd', 'dir', 'exec', 'exec-always', 'exec-add', 'exec-update', 'extra', 'extraunexec', 'file', 'fontdir', 'group', 'info', 'lib', 'man', 'mandir', 'mode', 'newgroup', 'newuser', 'option', 'owner', 'pkgcfl', 'pkgpath', 'rcscript', 'sample', 'shell', 'sysctl', 'sysctl', 'unexec', 'unexec-always', 'unexec-delete', 'unexec-update', 'ts', 'link', 'sha', 'mode', 'size', 'symlink', 'ts'); 
-        $fbsd_commands = array('cmd', 'exec', 'unexec', 'mode', 'owner', 'group', 'comment', 'dir');
+        $fbsd_commands = array('cwd', 'exec', 'unexec', 'mode', 'owner', 'group', 'comment', 'dir');
         $lines = explode("\n", $str);
 
         $file = '';
-        $cwd = '';
         foreach ($lines as $line) {
             if (preg_match('/^@([^ ]+) (.+)$/', $line, $matches)) {
                 $command = $matches[1];
@@ -213,9 +197,6 @@ class OpenBSD_PackageParser extends PackageParser {
 
                 default:
                     if (in_array($command, $fbsd_commands)) {
-                        if ($command == 'cwd') {
-                            $cwd = $data;
-                        }
                         $plist[] = '@' . $command . ' ' . $data;
                     }
             }

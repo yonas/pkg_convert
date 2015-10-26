@@ -32,8 +32,10 @@ abstract class Package {
                     $this->{$name} = $data;
                 }
             }
+
+            $this->verify();
         }
     }
 
-    public function verify() { }
+    protected function verify() { }
 }
