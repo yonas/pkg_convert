@@ -1,0 +1,27 @@
+{
+    "name"       : "yonas/pkg-convert",
+    "type"       : "library",
+    "description": "Convert OpenBSD packages to the FreeBSD pkg format",
+    "keywords"   : ["OpenBSD", "FreeBSD", "pkg", "package"],
+    "license"    : "MIT",
+    "homepage"   : "https://github.com/yonas/pkg-convert",
+    "support"    : {
+        "issues": "https://github.com/yonas/pkg-convert/issues",
+        "source": "https://github.com/yonas/pkg-convert"
+    },
+    "authors"    : [
+        {
+          "name"    : "Yonas Yanfa",
+          "homepage": "http://fizk.net"
+        }
+    ],
+    "require": {
+        "php" : ">=5.3.0"
+    },
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "fizk\\pkg\\": "src/"
+        }
+    }
+}
