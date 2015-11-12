@@ -19,6 +19,7 @@ class OpenBSD_PackageParser extends PackageParser {
             }
 
             // Decompress gzip
+/*
             $phar = new \PharData($this->path);
             $phar->decompress();
 
@@ -34,6 +35,24 @@ class OpenBSD_PackageParser extends PackageParser {
             // Remove temporary .tar file
             PackageCli::debug('Delete temporary tar file');
             unlink($tarfile);
+*/
+            shell_exec('gunzip -k -d ' . $this->path);
+
+            // Create temporary directory
+            $tmp_dir = PackageCli::create_temp_dir();
+
+            // Extract tar
+            PackageCli::debug('Extracting ' . $this->path . ' to ' . $tmp_dir);
+            $phar = new \PharData($tarfile);
+            $phar->extractTo($tmp_dir);
+            $this->path = $tmp_dir;
+            $this->path_is_tmp = true;
+
+            // Remove temporary .tar file
+            PackageCli::debug('Delete temporary tar file');
+            unlink($tarfile);
+        } else if (!is_dir($this->path)) {
+            throw new \Exception($this->path . ' is not a directory.');
         }
 
         // Verify +CONTENTS and +DESC files exist

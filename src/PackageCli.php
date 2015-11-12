@@ -61,7 +61,7 @@ class PackageCli {
 
     public static function usage() {
         global $argv;
-        print("\nUsage: " . $argv[0] . " -p|--package-path <path to uncompressed package directory or compressed package file> [-f|--format <tgz|tbz|tgz|tar>] [-o|--output-path <path to output directory>] [-d|--debug]\n\n");
+        print("\nUsage: " . $argv[0] . " -p|--package-path=<path to uncompressed package directory or compressed package file> [-o|--output-path=<path to output directory>] [-f|--format=<tgz|tbz|tgz|tar>] [-d|--debug]\n\n");
     }
 
     public static function get_options() {
@@ -115,23 +115,36 @@ class PackageCli {
             }
         }
 
+        if (empty($options['package-path'])) {
+            echo "Error: Missing package path\n";
+            self::usage();
+            exit(1);
+        }
+
         return $options;
     }
 
     public static function convert($from = 'OpenBSD', $to = 'FreeBSD') {
-        $class_from = '\\fizk\\pkg\\' . $from . '_PackageParser';
-        $class_to = '\\fizk\\pkg\\' . $to . '_PackageWriter';
+        try {
+            $class_from = '\\fizk\\pkg\\' . $from . '_PackageParser';
+            $class_to = '\\fizk\\pkg\\' . $to . '_PackageWriter';
 
-        function __autoload($class_name) {
-            if (($pos = strrpos($class_name, '\\')) !== false) {
-                include 'src/' . substr($class_name, $pos + 1) . '.php';
-            } else {
-                include 'src/' . $class_name . '.php';
+            function __autoload($class_name) {
+                if (($pos = strrpos($class_name, '\\')) !== false) {
+                    include 'src/' . substr($class_name, $pos + 1) . '.php';
+                } else {
+                    include 'src/' . $class_name . '.php';
+                }
             }
-        }
 
-        $options = self::get_options();
-        $pkg = new $class_to(new $class_from($options['package-path']));
-        return $pkg->create_package($options['output-path'], $options['format']);
+            $options = self::get_options();
+            $pkg = new $class_to(new $class_from($options['package-path']));
+            return $pkg->create_package($options['output-path'], $options['format']);
+        }
+        catch (\Exception $e) {
+            print_r($e->getMessage() . "\n");
+            print_r($e->getTraceAsString() . "\n");
+            return false;
+        }
     }
 }

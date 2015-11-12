@@ -44,19 +44,17 @@ class FreeBSD_PackageWriter extends PackageWriter {
         // Parse package information
         $package = new FreeBSD_Package($this->parser->parse_pkg());
 
-        // `pkg create` workaround
-        $package->plist = array_merge(array('@cwd /'), $package->plist);
+        // Add file prefix
+        $package->plist = array_merge(array('@cwd ' . $package->prefix), $package->plist);
 
-        PackageCli::debug('package');
-        PackageCli::debug($package->plist);
+        // `pkg create` will create the files listing based on the plist, so remove it here
+        unset($package->files);
 
         // Create FreeBSD manifest and plist files
         $manifest_writer = new FreeBSD_ManifestWriter($package, $this->parser->get_pkg_path());
         $manifest = $manifest_writer->create_manifest();
 
         // Move package files to be under $prefix
-        PackageCli::debug('Package prefix: ' . $package->prefix);
-
         $package_dir = $this->parser->get_pkg_path() . $package->prefix;
         PackageCli::debug('Creating new package directory: ' . $package_dir);
         mkdir($package_dir, 0755, true);
@@ -64,12 +62,12 @@ class FreeBSD_PackageWriter extends PackageWriter {
         shell_exec('mv ' . $this->parser->get_pkg_path() . '/* ' . $package_dir . '/');
 
         // Create FreeBSD compressed package file
-        $command = 'cd / && pkg create --format ' . $format .
+        $command = 'pkg create --format ' . $format .
                    ' --out-dir ' . $output_dir .
                    ' --verbose' .
                    ' --plist ' . $manifest['plist_dir'] . '/plist' .
                    ' --metadata ' . $manifest['manifest_dir'] .
-                   ' --root-dir ' . $this->parser->get_pkg_path() . $package->prefix;
+                   ' --root-dir ' . $this->parser->get_pkg_path();
 
         PackageCli::debug("Creating pkg file:\n". $command);
         $output = shell_exec($command);

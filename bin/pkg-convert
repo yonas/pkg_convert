@@ -3,7 +3,14 @@
 
 use fizk\pkg\PackageCli;
 
-require 'vendor/autoload.php';
+//require 'vendor/autoload.php';
+function __autoload($class_name) {
+    if (($pos = strrpos($class_name, '\\')) !== false) {
+        include 'src/' . substr($class_name, $pos + 1) . '.php';
+    } else {
+        include 'src/' . $class_name . '.php';
+    }
+}
 
 if (PackageCli::convert()) {
     print("Done!\n\n");
