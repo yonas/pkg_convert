@@ -14,9 +14,6 @@ class FreeBSD_Package extends Package {
                 $missing[] = $r;
             }
         }
-        if (!isset($this->dependencies)) {
-            $this->dependencies = '';
-        }
 
         if (!empty($missing)) {
             PackageCli::debug($this);
@@ -27,7 +24,7 @@ class FreeBSD_Package extends Package {
         unset($this->homepage);
         $this->desc = $this->description;
         unset($this->description);
-        $this->deps = $this->dependencies;
+        $this->deps = !empty($this->dependencies) ? $this->dependencies : '';
         unset($this->dependencies);
         $this->shlibs_required = $this->shared_libraries_required;
         unset($this->shared_libraries_required);
