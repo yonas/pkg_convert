@@ -58,6 +58,21 @@ class FreeBSD_PackageWriter extends PackageWriter {
         PackageCli::debug('Moving contents of ' . $this->parser->get_pkg_path() . ' to new directory ' . $package_dir);
         shell_exec('mv ' . $this->parser->get_pkg_path() . '/* ' . $package_dir . '/');
 
+        // Create empty directories listed in the plist
+        $cwd = $package->prefix;
+        foreach ($package->plist as $item) {
+            if (preg_match('/@cwd (.+)$/', $item, $matches)) {
+                $cwd = $matches[1];
+            }
+            else if (preg_match('/^(?:@dir )?(.+)\/$/', $item, $matches)) {
+                $dir = $matches[1];
+                if (!is_dir($this->parser->get_pkg_path() . $cwd . '/' . $dir)) {
+                    PackageCli::debug('Creating empty plist directory: ' . $this->parser->get_pkg_path() . $cwd . '/' . $dir);
+                    mkdir($this->parser->get_pkg_path() . $cwd . '/' . $dir);
+                }
+            }
+        }
+
         // Create FreeBSD compressed package file
         $command = 'pkg create --format ' . $format .
                    ' --out-dir ' . $output_dir .

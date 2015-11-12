@@ -187,6 +187,7 @@ class OpenBSD_PackageParser extends PackageParser {
                 case 'file':
                 case 'bin':
                 case 'man':
+                case 'shell':
                     $files[$data] = '';
                     $file = $data;
                     if (substr($data, strlen($data) - 1) == '/') {
