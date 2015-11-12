@@ -29,6 +29,9 @@ class FreeBSD_ManifestWriter extends ManifestWriter {
             return false;
         }
 
+        // `pkg create` will create the files listing based on the plist, so remove it here
+        unset($pkg->files);
+
         $manifest = (array)$pkg;
         $plist = $manifest['plist'];
         unset($manifest['plist']);

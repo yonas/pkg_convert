@@ -47,9 +47,6 @@ class FreeBSD_PackageWriter extends PackageWriter {
         // Add file prefix
         $package->plist = array_merge(array('@cwd ' . $package->prefix), $package->plist);
 
-        // `pkg create` will create the files listing based on the plist, so remove it here
-        unset($package->files);
-
         // Create FreeBSD manifest and plist files
         $manifest_writer = new FreeBSD_ManifestWriter($package, $this->parser->get_pkg_path());
         $manifest = $manifest_writer->create_manifest();
